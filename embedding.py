@@ -49,10 +49,9 @@ def create_frame_embeddings(load_path, save_path):
 
         name_without_extension = os.path.splitext(video_file)[0]
         output_filename = f"{name_without_extension}_embeddings.pt"
-        print(embeddings_torch.shape)
         with open(os.path.join(save_path, output_filename), 'wb') as f:
             torch.save(embeddings_torch, f)  # save tensor directly
 
-# Uncomment these lines to run the function
-#create_frame_embeddings("./data/orig_data/train", "./data/embedding_data/train")
+
+create_frame_embeddings("./data/orig_data/train", "./data/embedding_data/train")
 create_frame_embeddings("./data/orig_data/test", "./data/embedding_data/test")
