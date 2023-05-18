@@ -71,6 +71,7 @@ def create_frame_embeddings(load_path, save_path, difference=False):
             torch.save(embeddings_torch, f)
 
 
-#create_frame_embeddings("./data/orig_data/train", "data/frame_embeddings/train")
+create_frame_embeddings("./data/orig_data/train", "data/frame_embeddings/train")
 create_frame_embeddings("./data/orig_data/test", "data/frame_embeddings/test")
+create_frame_embeddings("./data/orig_data/train","data/frame_change_embeddings/test", difference=True)
 create_frame_embeddings("./data/orig_data/test","data/frame_change_embeddings/test", difference=True)
