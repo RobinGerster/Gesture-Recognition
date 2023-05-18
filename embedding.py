@@ -53,5 +53,5 @@ def create_frame_embeddings(load_path, save_path):
             torch.save(embeddings_torch, f)  # save tensor directly
 
 
-create_frame_embeddings("./data/orig_data/train", "./data/embedding_data/train")
-create_frame_embeddings("./data/orig_data/test", "./data/embedding_data/test")
+create_frame_embeddings("./data/orig_data/train", "data/frame_embeddings/train")
+create_frame_embeddings("./data/orig_data/test", "data/frame_embeddings/test")
