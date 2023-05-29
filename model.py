@@ -41,7 +41,7 @@ class MultiLayerPerceptron2(torch.nn.Module):
 class MultiLayerPerceptron3(torch.nn.Module):
     def __init__(self, width):
         # call the parent constructor
-        super(MultiLayerPerceptron2, self).__init__()
+        super(MultiLayerPerceptron3, self).__init__()
         self.width = width
 
         self.nn = Sequential(
@@ -62,7 +62,7 @@ class MultiLayerPerceptron3(torch.nn.Module):
 class MultiLayerPerceptron4(torch.nn.Module):
     def __init__(self, width):
         # call the parent constructor
-        super(MultiLayerPerceptron2, self).__init__()
+        super(MultiLayerPerceptron4, self).__init__()
         self.width = width
 
         self.nn = Sequential(
