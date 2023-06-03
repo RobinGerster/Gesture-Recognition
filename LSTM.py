@@ -120,33 +120,59 @@ class LstmRNN(nn.Module):
         self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first = True) # utilize the LSTM model in torch.nn 
         self.forwardCalculation = nn.Linear(hidden_size, output_size)
  
-    def forward(self, _x):
-        x, _ = self.lstm(_x)  # _x is input, size (seq_len, batch, input_size)
-        s, b, h = x.shape  # x is output, size (seq_len, batch, hidden_size)
-        x = x.view(s * b, h)
-        x = self.forwardCalculation(x)
-        x = nn.functional.relu(x)
-        x = x.view(s, b, -1)
-        return x    
+    # def forward(self, _x):
+    #     x, _ = self.lstm(_x)  # _x is input, size (seq_len, batch, input_size)
+    #     s, b, h = x.shape  # x is output, size (seq_len, batch, hidden_size)
+    #     x = x.view(s * b, h)
+    #     x = self.forwardCalculation(x)
+    #     # x = nn.functional.softmax(x, dim=1)
+    #     x = x.view(s, b, -1)
+    #     return x    
     
+    def forward(self, x):
+        x, _ = self.lstm(x) # x is input, size (batch, seq_len, input_size)
+        # print("lstm",x.size())
+        x = x[:,-1,:]
+        # print("lstm",x.size())
+        x = self.forwardCalculation(x)
+        return x
+        
+        # indices = torch.tensor([7])
+        # x = torch.index_select(x, 0, indices)
+        # print(x.size())
+        # x = 
+        
+        
+        
+        # # 输入是 (16, 384)
+        # #x的大小为（batch，1，28,28），所以我们需要将其转化为rnn的输入格式（28，batch，28）
+        # x = x.squeeze() #去掉（batch，1,28,28）中的1，变成（batch， 28,28）
+        # x = x.permute(2, 0, 1)#将最后一维放到第一维，变成（batch，28,28）
+        # out, _ = self.rnn(x) #使用默认的隐藏状态，得到的out是（28， batch， hidden_feature）
+        # out = out[-1,:,:]#取序列中的最后一个，大小是（batch， hidden_feature)
+        # out = self.classifier(out) #得到分类结果
+        # return out
+
     
 if __name__ == '__main__':
 
     input_size = 384
-    hidden_size = 32
+    hidden_size = 192
     num_layers = 1
-    output_size = 1
+    
+    # 与类别数相同
+    output_size = 9
     # seq_length = 16
     batch_size = 1
 
     loader = EmbeddingsDataloader()
     labels, data = loader.__getitem__(0)
-    print(data.__len__())
-    print(labels.__len__())
+    # print(data.__len__())
+    # print(labels.__len__())
 
-    print(type(data))
-    print(data.size())
-    # print(dataset.__getitem__(0).size())
+    # print(type(data))
+    # print(data.size())
+    # # print(dataset.__getitem__(0).size())
     # print(dataset.__getitem__(100).size())
     
     
@@ -157,6 +183,7 @@ if __name__ == '__main__':
 
     # Define loss function and optimizer
     criterion = nn.CrossEntropyLoss()
+    # criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     
     
@@ -170,13 +197,16 @@ if __name__ == '__main__':
                 break
             optimizer.zero_grad()
             inputs = inputs.to(device)
+            # print(labels.size())
+            labels=labels[-1].view(1).to(torch.int64) 
             labels = labels.to(device)
             
             inputs = inputs.reshape(1,16,384)
             # Forward pass
             output = model(inputs)
-            output = output.view(16)
-            print(output.size())
+            # output = output.view(16)
+            
+
             # Compute loss
             loss = criterion(output, labels)
             # Backward pass and optimization
@@ -185,3 +215,13 @@ if __name__ == '__main__':
             # Print progress
             if (epoch+1) % 1 == 0:
                 print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.cpu().item()}')
+                
+
+# Test the model
+model.eval()
+with torch.no_grad():
+    test_input_data = torch.randn(batch_size, seq_length, input_size)
+    test_target_data = torch.randn(batch_size, output_size)
+    test_output = model(test_input_data)
+    test_loss = criterion(test_output, test_target_data)
+    print(f'Test Loss: {test_loss.item()}')
