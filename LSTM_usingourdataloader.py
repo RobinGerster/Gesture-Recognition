@@ -159,19 +159,19 @@ if __name__ == '__main__':
     # device = 'cpu'
 
     input_size = 384
-    hidden_size = 192
+    hidden_size = 2048
     num_layers = 1
     
     # 与类别数相同
     output_size = 9
-    seq_length = 32
+    seq_length = 64
     batch_size = 32
 
     # loader = EmbeddingsDataloader()
     
     from torch.utils.data import DataLoader 
     from dataloader import EmbeddingsDataloader
-    dataset = EmbeddingsDataloader(mode='train', width=seq_length, overlap=True)
+    dataset = EmbeddingsDataloader(mode='train', width=seq_length, overlap=False)
     loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     
     
@@ -187,11 +187,32 @@ if __name__ == '__main__':
     
     
     # Training loop
-    num_epochs = 8
+    num_epochs = 4
     model.train()
+
+    # for testing
+    test_dataset = EmbeddingsDataloader(width=seq_length, mode='test', overlap=False)
+    test_dataloader = DataLoader(test_dataset, batch_size=512)
+    def test():
+        with torch.no_grad():
+            total_attempts = 0
+            correct = 0
+            classified = []
+            ground_truth = []
+            for x, y in test_dataloader:
+                x, y = x.to(device), y.to(device)
+                res = model(x)
+                # label = one_hot(y[:,-1].type(torch.int64), num_classes=9).float()
+                total_attempts += x.shape[0]
+                correct += float((y[:,-1] == torch.argmax(res, dim=-1)).sum())
+
+                ground_truth.append(torch.nn.functional.one_hot(y[:,-1].type(torch.int64), num_classes=9).float().cpu().numpy())
+                classified.append(res.cpu().numpy())
+            return round(correct / total_attempts, 3), classified, ground_truth
 
     from tqdm import tqdm
 
+    testaccs = []
     for epoch in range(num_epochs):
         print("epoch", epoch)
         for inputs, labels in tqdm(loader):
@@ -218,7 +239,14 @@ if __name__ == '__main__':
             # Print progress
             # if (epoch+1) % 1 == 0:
             #     print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.cpu().item()}')
-                
+        
+        testacc, y_hat, y = test()
+        print("FINAL ACC", testacc)
+        testaccs.append(testacc)
+    
+    import matplotlib.pyplot as plt
+    plt.plot(range(len(testaccs)), testaccs)
+    plt.savefig('LSTM_learning.jpg')
 
     # # Test the model
     # model.eval()
@@ -229,25 +257,3 @@ if __name__ == '__main__':
     #     test_output = model(test_input_data)
     #     test_loss = criterion(test_output, test_target_data)
     #     print(f'Test Loss: {test_loss.item()}')
-
-    test_dataset = EmbeddingsDataloader(width=seq_length, mode='test', overlap=False)
-    test_dataloader = DataLoader(test_dataset, batch_size=512)
-    def test():
-        with torch.no_grad():
-            total_attempts = 0
-            correct = 0
-            classified = []
-            ground_truth = []
-            for x, y in test_dataloader:
-                x, y = x.to(device), y.to(device)
-                res = model(x)
-                # label = one_hot(y[:,-1].type(torch.int64), num_classes=9).float()
-                total_attempts += x.shape[0]
-                correct += float((y[:,-1] == torch.argmax(res, dim=-1)).sum())
-
-                ground_truth.append(torch.nn.functional.one_hot(y[:,-1].type(torch.int64), num_classes=9).float().cpu().numpy())
-                classified.append(res.cpu().numpy())
-            return round(correct / total_attempts, 3), classified, ground_truth
-
-    testacc, y_hat, y = test()
-    print("FINAL ACC", testacc)
