@@ -156,7 +156,7 @@ class LstmRNN(nn.Module):
 if __name__ == '__main__':
     
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-    device = 'cpu'
+    # device = 'cpu'
 
     input_size = 384
     hidden_size = 192
@@ -164,15 +164,15 @@ if __name__ == '__main__':
     
     # 与类别数相同
     output_size = 9
-    # seq_length = 16
-    batch_size = 1
+    seq_length = 32
+    batch_size = 32
 
     # loader = EmbeddingsDataloader()
     
     from torch.utils.data import DataLoader 
     from dataloader import EmbeddingsDataloader
-    dataset = EmbeddingsDataloader(mode='train', width=16, overlap=True)
-    loader = DataLoader(dataset, batch_size=1, shuffle=True)
+    dataset = EmbeddingsDataloader(mode='train', width=seq_length, overlap=True)
+    loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     
     
     # Create LSTM model instance
@@ -187,12 +187,12 @@ if __name__ == '__main__':
     
     
     # Training loop
-    num_epochs = 330
+    num_epochs = 8
     model.train()
 
     from tqdm import tqdm
 
-    for epoch in tqdm(range(num_epochs)):
+    for epoch in range(num_epochs):
         print("epoch", epoch)
         for inputs, labels in tqdm(loader):
             # if(inputs.shape[1] != 16):
@@ -220,12 +220,34 @@ if __name__ == '__main__':
             #     print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.cpu().item()}')
                 
 
-    # Test the model
-    model.eval()
-    with torch.no_grad():
-        seq_length = 10
-        test_input_data = torch.randn(batch_size, seq_length, input_size)
-        test_target_data = torch.randn(batch_size, output_size)
-        test_output = model(test_input_data)
-        test_loss = criterion(test_output, test_target_data)
-        print(f'Test Loss: {test_loss.item()}')
+    # # Test the model
+    # model.eval()
+    # with torch.no_grad():
+    #     seq_length = 10
+    #     test_input_data = torch.randn(batch_size, seq_length, input_size)
+    #     test_target_data = torch.randn(batch_size, output_size)
+    #     test_output = model(test_input_data)
+    #     test_loss = criterion(test_output, test_target_data)
+    #     print(f'Test Loss: {test_loss.item()}')
+
+    test_dataset = EmbeddingsDataloader(width=seq_length, mode='test', overlap=False)
+    test_dataloader = DataLoader(test_dataset, batch_size=512)
+    def test():
+        with torch.no_grad():
+            total_attempts = 0
+            correct = 0
+            classified = []
+            ground_truth = []
+            for x, y in test_dataloader:
+                x, y = x.to(device), y.to(device)
+                res = model(x)
+                # label = one_hot(y[:,-1].type(torch.int64), num_classes=9).float()
+                total_attempts += x.shape[0]
+                correct += float((y[:,-1] == torch.argmax(res, dim=-1)).sum())
+
+                ground_truth.append(torch.nn.functional.one_hot(y[:,-1].type(torch.int64), num_classes=9).float().cpu().numpy())
+                classified.append(res.cpu().numpy())
+            return round(correct / total_attempts, 3), classified, ground_truth
+
+    testacc, y_hat, y = test()
+    print("FINAL ACC", testacc)
