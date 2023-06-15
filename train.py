@@ -9,6 +9,7 @@ import time
 import numpy as np
 import copy
 device = 'mps' if torch.backends.mps.is_available() else 'cuda' if torch.cuda.is_available() else 'cpu'
+device = 'cpu'
 
 def run_training(model, learning_rate, batch_size, frames_per_datapoint,\
                  train_data_overlap, epochs):
