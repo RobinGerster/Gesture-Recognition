@@ -81,3 +81,57 @@ class MultiLayerPerceptron4(torch.nn.Module):
         x = x.reshape(x.shape[0], x.shape[2] * self.width)
         x = self.nn(x)
         return x.view(x.shape[0], x.shape[-1])
+
+class LstmRNN(Module):
+    def __init__(self, input_size):
+        super().__init__()
+        input_size = 384
+        hidden_size = 2048
+        num_layers = 1
+        self.lstm = LSTM(input_size, hidden_size, num_layers, batch_first = True)
+        self.forwardCalculation = Linear(hidden_size, 9)
+        self.dropout = torch.nn.Dropout(p=0.2)
+ 
+    
+    def forward(self, x):
+        x, _ = self.lstm(x)
+        x = x[:,-1,:]
+        x = self.dropout(x)
+        x = self.forwardCalculation(x)
+        return x
+
+class LstmRNN2(Module):
+    def __init__(self, input_size):
+        super().__init__()
+        input_size = 384
+        hidden_size = 2048
+        num_layers = 2
+        self.lstm = LSTM(input_size, hidden_size, num_layers, batch_first = True)
+        self.forwardCalculation = Linear(hidden_size, 9)
+        self.dropout = torch.nn.Dropout(p=0.2)
+ 
+    
+    def forward(self, x):
+        x, _ = self.lstm(x)
+        x = x[:,-1,:]
+        x = self.dropout(x)
+        x = self.forwardCalculation(x)
+        return x
+
+class LstmRNN3(Module):
+    def __init__(self, input_size):
+        super().__init__()
+        input_size = 384
+        hidden_size = 2048
+        num_layers = 3
+        self.lstm = LSTM(input_size, hidden_size, num_layers, batch_first = True)
+        self.forwardCalculation = Linear(hidden_size, 9)
+        self.dropout = torch.nn.Dropout(p=0.2)
+ 
+    
+    def forward(self, x):
+        x, _ = self.lstm(x)
+        x = x[:,-1,:]
+        x = self.dropout(x)
+        x = self.forwardCalculation(x)
+        return x

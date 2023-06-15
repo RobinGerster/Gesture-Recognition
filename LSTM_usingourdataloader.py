@@ -92,65 +92,19 @@ class LSTMModel(nn.Module):
         return out
     
 class LstmRNN(nn.Module):
-    """
-        Parameters: 
-        - input_size: feature size
-        - hidden_size: number of hidden units
-        - output_size: number of output
-        - num_layers: layers of LSTM to stack
-    """
     def __init__(self, input_size, hidden_size=1, output_size=1, num_layers=1):
         super().__init__()
-        """
-        torch.nn.LSTM() Parameters
-        - input_size: The number of expected features in the input x
-        - hidden_size: The number of features in the hidden state h
-        - num_layers: 多层堆叠. 
-            E.g., setting num_layers=2 would mean stacking two LSTMs together to form a stacked LSTM, 
-            with the second LSTM taking in outputs of the first LSTM and computing the final results. Default: 1
-        - bias: If False, then the layer does not use bias weights b_ih and b_hh. Default: True
-        - batch_first: If True, then the input and output tensors are provided as (batch, seq, feature) instead of (seq, batch, feature). 
-            Note that this does not apply to hidden or cell states. See the Inputs/Outputs sections below for details. Default: False
-        - dropout: If non-zero, introduces a Dropout layer on the outputs of each LSTM layer except the last layer, 
-            with dropout probability equal to dropout. Default: 0
-        - bidirectional: If True, becomes a bidirectional LSTM. Default: False
-        - proj_size: If > 0, will use LSTM with projections of corresponding size. Default: 0
-        """
-        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first = True) # utilize the LSTM model in torch.nn 
+        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first = True)
         self.forwardCalculation = nn.Linear(hidden_size, output_size)
+        self.dropout = torch.nn.Dropout(p=0.2)
  
-    # def forward(self, _x):
-    #     x, _ = self.lstm(_x)  # _x is input, size (seq_len, batch, input_size)
-    #     s, b, h = x.shape  # x is output, size (seq_len, batch, hidden_size)
-    #     x = x.view(s * b, h)
-    #     x = self.forwardCalculation(x)
-    #     # x = nn.functional.softmax(x, dim=1)
-    #     x = x.view(s, b, -1)
-    #     return x    
     
     def forward(self, x):
-        x, _ = self.lstm(x) # x is input, size (batch, seq_len, input_size)
-        # print("lstm",x.size())
+        x, _ = self.lstm(x)
         x = x[:,-1,:]
-        # print("lstm",x.size())
+        x = self.dropout(x)
         x = self.forwardCalculation(x)
         return x
-        
-        # indices = torch.tensor([7])
-        # x = torch.index_select(x, 0, indices)
-        # print(x.size())
-        # x = 
-        
-        
-        
-        # # 输入是 (16, 384)
-        # #x的大小为（batch，1，28,28），所以我们需要将其转化为rnn的输入格式（28，batch，28）
-        # x = x.squeeze() #去掉（batch，1,28,28）中的1，变成（batch， 28,28）
-        # x = x.permute(2, 0, 1)#将最后一维放到第一维，变成（batch，28,28）
-        # out, _ = self.rnn(x) #使用默认的隐藏状态，得到的out是（28， batch， hidden_feature）
-        # out = out[-1,:,:]#取序列中的最后一个，大小是（batch， hidden_feature)
-        # out = self.classifier(out) #得到分类结果
-        # return out
 
     
 if __name__ == '__main__':
@@ -159,20 +113,20 @@ if __name__ == '__main__':
     # device = 'cpu'
 
     input_size = 384
-    hidden_size = 2048
+    hidden_size = 1024
     num_layers = 1
     
     # 与类别数相同
     output_size = 9
     seq_length = 64
-    batch_size = 32
+    batch_size = 256
 
     # loader = EmbeddingsDataloader()
     
     from torch.utils.data import DataLoader 
     from dataloader import EmbeddingsDataloader
-    dataset = EmbeddingsDataloader(mode='train', width=seq_length, overlap=False)
-    loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    dataset = EmbeddingsDataloader(mode='train', width=seq_length, overlap=True)
+    loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
     
     
     # Create LSTM model instance
@@ -187,7 +141,7 @@ if __name__ == '__main__':
     
     
     # Training loop
-    num_epochs = 4
+    num_epochs = 20
     model.train()
 
     # for testing
@@ -195,6 +149,7 @@ if __name__ == '__main__':
     test_dataloader = DataLoader(test_dataset, batch_size=512)
     def test():
         with torch.no_grad():
+            model.eval()
             total_attempts = 0
             correct = 0
             classified = []
@@ -215,16 +170,12 @@ if __name__ == '__main__':
     testaccs = []
     for epoch in range(num_epochs):
         print("epoch", epoch)
+        model.train()
         for inputs, labels in tqdm(loader):
-            # if(inputs.shape[1] != 16):
-            #     break
             optimizer.zero_grad()
             inputs = inputs.to(device).float()
-            # print(labels.size())
-            # labels=labels[-1].view(1).to(torch.int64) 
             labels = labels.to(device)
             
-            # inputs = inputs.reshape(1,16,384)
             # Forward pass
             output = model(inputs)
             # output = output.view(16)

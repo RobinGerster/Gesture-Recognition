@@ -15,7 +15,7 @@ def run_training(model, learning_rate, batch_size, frames_per_datapoint,\
     
     model = model(frames_per_datapoint).to(device)
     # print(model)
-    best_model = copy.deepcopy(model)
+    best_model = copy.deepcopy(model.state_dict())
     train_dataset = EmbeddingsDataloader(width=frames_per_datapoint)
     test_dataset = EmbeddingsDataloader(width=frames_per_datapoint, mode='test', overlap=True)
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size)
@@ -77,7 +77,7 @@ def run_training(model, learning_rate, batch_size, frames_per_datapoint,\
                 test_acc_last = test_acc
                 if test_acc > best_test_acc:
                     best_test_acc = test_acc
-                    best_model = copy.deepcopy(model)
+                    best_model = copy.deepcopy(model.state_dict())
             else:
                 test_accs.append(test_acc_last)
             print(f"epoch {epoch}/{epochs-1}, done fraction: {round(index / len(train_dataloader), 2)}, loss is {round(loss_count, 3)}, accuracy {round((correct / total_attempts).item(), 3)}, test_acc: {test_acc}", end='\r')
