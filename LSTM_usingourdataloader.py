@@ -96,13 +96,13 @@ class LstmRNN(nn.Module):
         super().__init__()
         self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first = True)
         self.forwardCalculation = nn.Linear(hidden_size, output_size)
-        self.dropout = torch.nn.Dropout(p=0.2)
+        # self.dropout = torch.nn.Dropout(p=0.2)
  
     
     def forward(self, x):
         x, _ = self.lstm(x)
         x = x[:,-1,:]
-        x = self.dropout(x)
+        # x = self.dropout(x)
         x = self.forwardCalculation(x)
         return x
 
@@ -113,13 +113,13 @@ if __name__ == '__main__':
     # device = 'cpu'
 
     input_size = 384
-    hidden_size = 1024
-    num_layers = 1
+    hidden_size = 192
+    num_layers = 3
     
     # 与类别数相同
     output_size = 9
-    seq_length = 64
-    batch_size = 256
+    seq_length = 16
+    batch_size = 32
 
     # loader = EmbeddingsDataloader()
     
@@ -137,7 +137,7 @@ if __name__ == '__main__':
     # Define loss function and optimizer
     criterion = nn.CrossEntropyLoss()
     # criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    optimizer = optim.Adam(model.parameters(), lr=0.0005)
     
     
     # Training loop
